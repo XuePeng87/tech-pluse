@@ -242,6 +242,98 @@ DEFAULT_SOURCES = [
         "weight": 1.5,
         "reliability": 0.9,
     },
+
+    # 📚 编程语言 / 周刊
+    {
+        "name": "Medium Engineering",
+        "url": "https://medium.com/feed/medium-engineering",
+        "fetch_method": "rss",
+        "weight": 0.8,
+        "reliability": 0.7,
+    },
+    {
+        "name": "freeCodeCamp",
+        "url": "https://www.freecodecamp.org/news/rss/",
+        "fetch_method": "rss",
+        "weight": 0.7,
+        "reliability": 0.65,
+    },
+    {
+        "name": "Python Weekly",
+        "url": "https://pythonweekly.com/rss/",
+        "fetch_method": "rss",
+        "weight": 0.7,
+        "reliability": 0.65,
+    },
+    {
+        "name": "JavaScript Weekly",
+        "url": "https://javascriptweekly.com/rss/",
+        "fetch_method": "rss",
+        "weight": 0.7,
+        "reliability": 0.65,
+    },
+    {
+        "name": "Node Weekly",
+        "url": "https://nodeweekly.com/rss/",
+        "fetch_method": "rss",
+        "weight": 0.6,
+        "reliability": 0.6,
+    },
+    {
+        "name": "Mozilla Hacks",
+        "url": "https://hacks.mozilla.org/feed/",
+        "fetch_method": "rss",
+        "weight": 0.9,
+        "reliability": 0.75,
+    },
+    {
+        "name": "Apache Software Foundation Blog",
+        "url": "https://blogs.apache.org/foundation/feed/entries/atom",
+        "fetch_method": "rss",
+        "weight": 0.8,
+        "reliability": 0.75,
+    },
+
+    # ☁️ 云计算 / DevOps 补充
+    {
+        "name": "Google Cloud Blog",
+        "url": "https://cloudblog.withgoogle.com/rss/",
+        "fetch_method": "rss",
+        "weight": 0.8,
+        "reliability": 0.7,
+    },
+    {
+        "name": "Docker Blog",
+        "url": "https://www.docker.com/blog/feed/",
+        "fetch_method": "rss",
+        "weight": 0.7,
+        "reliability": 0.65,
+    },
+
+    # 🇨🇳 中文技术社区补充
+    {
+        "name": "Linux 中国",
+        "url": "https://linux.cn/rss.xml",
+        "fetch_method": "rss",
+        "weight": 0.7,
+        "reliability": 0.65,
+    },
+
+    # 📰 聚合 / 其他
+    {
+        "name": "DZone",
+        "url": "http://feeds.dzone.com/home",
+        "fetch_method": "rss",
+        "weight": 0.7,
+        "reliability": 0.65,
+    },
+    {
+        "name": "CodeProject",
+        "url": "https://www.codeproject.com/WebServices/ArticleRSS.aspx",
+        "fetch_method": "rss",
+        "weight": 0.6,
+        "reliability": 0.6,
+    },
 ]
 
 

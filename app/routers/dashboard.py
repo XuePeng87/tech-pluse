@@ -477,6 +477,20 @@ def _render_template(title: str, content: str, tab: str = "trends", search_q: st
             border-color: #0066cc;
             color: #fff;
         }}
+        .filter-select {{
+            padding: 3px 10px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #555;
+            background: #fff;
+            outline: none;
+            cursor: pointer;
+        }}
+        .filter-select:hover {{
+            border-color: #0066cc;
+            color: #0066cc;
+        }}
 
         /* ===== Pagination ===== */
         .pagination {{
@@ -876,7 +890,7 @@ def _article_card(article: Article, source: Source) -> str:
 
 
 @router.get("/", response_class=HTMLResponse)
-async def index(page: int = 1, category: str = "", q: str = "", tab: str = "trends", db: AsyncSession = Depends(get_db)):
+async def index(page: int = 1, category: str = "", source: str = "", q: str = "", tab: str = "trends", db: AsyncSession = Depends(get_db)):
     """主页面：tab 切换趋势 / 文章。"""
     if page < 1:
         page = 1
@@ -901,10 +915,29 @@ async def index(page: int = 1, category: str = "", q: str = "", tab: str = "tren
         .order_by(func.count(Article.id).desc())
     )).all()
 
+    # ===== 渠道过滤（列出所有源，含文章数） =====
+    all_sources = (await db.execute(
+        select(Source).order_by(Source.is_active.desc(), Source.name)
+    )).scalars().all()
+
+    # 批量查询各源文章数
+    src_count_result = await db.execute(
+        select(Source.name, func.count(Article.id))
+        .join(Article, Article.source_id == Source.id)
+        .where(Article.is_processed == True)
+        .group_by(Source.name)
+    )
+    src_count_map = {row[0]: row[1] for row in src_count_result}
+
+    source_rows = [(s.name, src_count_map.get(s.name, 0)) for s in all_sources]
+    source_rows.sort(key=lambda x: x[1], reverse=True)
+
     # ===== 文章列表（分页 + 搜索） =====
     base_q = select(func.count(Article.id)).where(Article.is_processed == True)
     if category:
         base_q = base_q.where(Article.category == category)
+    if source:
+        base_q = base_q.join(Source, Article.source_id == Source.id).where(Source.name == source)
     if q:
         base_q = base_q.where(_article_search_filter(q))
     total_processed = (await db.execute(base_q)).scalar() or 0
@@ -918,6 +951,8 @@ async def index(page: int = 1, category: str = "", q: str = "", tab: str = "tren
     )
     if category:
         article_q = article_q.where(Article.category == category)
+    if source:
+        article_q = article_q.where(Source.name == source)
     if q:
         article_q = article_q.where(_article_search_filter(q))
     articles = (await db.execute(
@@ -934,15 +969,29 @@ async def index(page: int = 1, category: str = "", q: str = "", tab: str = "tren
         trends_html = '<div class="empty">暂无趋势数据，等待更多文章...</div>'
 
     # 分类过滤
+    from urllib.parse import quote
+
     cat_html = '<div class="filter-bar"><span class="filter-label">分类</span>'
-    cat_q_base = f"/?tab=articles"
+    cat_q_base = "/?tab=articles"
     if q:
         cat_q_base += f"&q={q}"
-    cat_html += f'<a href="{cat_q_base}" class="filter-chip{" active" if not category else ""}>全部</a>'
+    if source:
+        cat_q_base += f"&source={source}"
+    all_active = " active" if not category else ""
+    cat_html += f'<a href="{cat_q_base}" class="filter-chip{all_active}">全部</a>'
     for cat, cnt in cat_rows:
         active = " active" if category == cat else ""
-        cat_html += f'<a href="{cat_q_base}&category={cat}" class="filter-chip{active}">{cat} ({cnt})</a>'
+        cat_html += f'<a href="{cat_q_base}&category={quote(cat)}" class="filter-chip{active}">{cat} ({cnt})</a>'
     cat_html += "</div>"
+
+    # 渠道过滤（下拉选择）
+    src_html = '<div class="filter-bar"><span class="filter-label">渠道</span>'
+    src_html += f'<select onchange="window.location.href=this.value" class="filter-select">'
+    src_html += f'<option value="/?tab=articles{f"&q={q}" if q else ""}{"&category=" + quote(category) if category else ""}">全部</option>'
+    for src_name, src_cnt in source_rows:
+        selected = " selected" if source == src_name else ""
+        src_html += f'<option value="/?tab=articles{f"&q={q}" if q else ""}{"&category=" + quote(category) if category else ""}&source={quote(src_name)}"{selected}>{src_name} ({src_cnt})</option>'
+    src_html += "</select></div>"
 
     # 搜索提示
     search_notice_html = ""
@@ -957,6 +1006,8 @@ async def index(page: int = 1, category: str = "", q: str = "", tab: str = "tren
             pag_params += f"&q={q}"
         if category:
             pag_params += f"&category={category}"
+        if source:
+            pag_params += f"&source={source}"
         pag_url = f"/?{pag_params}&page={{page}}"
         articles_html += _pagination_html(page, total_pages, pag_url)
     else:
@@ -1158,7 +1209,7 @@ async def index(page: int = 1, category: str = "", q: str = "", tab: str = "tren
         <div class="trend-methodology-footer">综合信号 = 四项加权之和，满分 1.0。低于 0.3 分不显示。</div>
     </div>""" if tab == "trends" else ""}
         {"<div>" + trends_html + "</div>" if tab == "trends" else ""}
-        {"<div>" + search_notice_html + cat_html + articles_html + "</div>" if tab == "articles" else ""}
+        {"<div>" + search_notice_html + cat_html + src_html + articles_html + "</div>" if tab == "articles" else ""}
         {topic_list_html if tab == "topics" else ""}
         {stats_content if tab == "stats" else ""}
     </div>
