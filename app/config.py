@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     """所有配置项，支持环境变量和 .env 文件。"""
 
     # ===== 数据库 =====
-    database_url: str = "mysql+aiomysql://root:Snow103082..@localhost:3306/tech-pluse"
+    database_url: str = ""
 
     # ===== LLM：本地 Ollama（优先） =====
     ollama_model: str = "deepseek-r1:7b"
